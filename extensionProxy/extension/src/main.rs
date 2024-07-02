@@ -8,7 +8,6 @@ use lambda_extension::*;
 
 pub mod methods;
 pub mod types;
-pub mod actions;
 pub mod env;
 
 pub const DEFAULT_PROXY_PORT: u16 = 1337;
