@@ -1,27 +1,29 @@
 use axum::{
-    extract::Path, http::{HeaderMap, StatusCode}, Json
+    body::Bytes, extract::Path, http::{HeaderMap, StatusCode}
 };
 
-use crate::{LAMBDA_RUNTIME_API_VERSION, PROXY_PORT};
+use crate::LAMBDA_RUNTIME_API_VERSION;
 
 pub async fn post_invocation_response(
-        headers: axum::http::HeaderMap,
         Path(invocation_id): Path<String>,
-        Json(payload): Json<serde_json::Value>,
-) -> (StatusCode, HeaderMap, Json<serde_json::Value>) {
+        payload: Bytes,
+) -> (StatusCode, HeaderMap, Bytes) {
 
     let client = reqwest::Client::new();
 
-    let api_response = client.post(format!("http://localhost:{}/{}/invocation/{}/error",PROXY_PORT, LAMBDA_RUNTIME_API_VERSION, invocation_id))
-        .body(serde_json::to_string(&payload).unwrap())
-        .headers(headers.clone())
+    lambda_extension::tracing::info!(event_type = "responseEvent", event = ?payload, "invoking");
+
+    let api_response = client.post(format!("http://{}/{}/runtime/invocation/{}/response", crate::env::env::sandbox_runtime_api(), LAMBDA_RUNTIME_API_VERSION, invocation_id))
+        .body(payload)
         .send()
         .await
         .unwrap();
 
     let status = api_response.status();
     let response_headers = api_response.headers().clone();
-    let body = api_response.json::<serde_json::Value>().await.unwrap();
+    let body = api_response.bytes().await.unwrap();
 
-    (status, response_headers, Json(body))
+    lambda_extension::tracing::info!(event_type = "responseEvent", event = ?body, "invoking");
+
+    (status, response_headers, body)
 }

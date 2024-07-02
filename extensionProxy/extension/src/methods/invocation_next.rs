@@ -1,8 +1,10 @@
 use axum::{
     http::{HeaderMap, StatusCode}, Json
 };
+use lambda_extension::tracing;
+use serde_json::json;
 
-use crate::{LAMBDA_RUNTIME_API_VERSION, PROXY_PORT};
+use crate::LAMBDA_RUNTIME_API_VERSION;
 
 pub async fn get_invocation_next(
         headers: axum::http::HeaderMap,
@@ -10,23 +12,27 @@ pub async fn get_invocation_next(
 
     let client = reqwest::Client::new();
 
-    let api_response = client.get(format!("http://localhost:{}/{}/invocation/next",PROXY_PORT, LAMBDA_RUNTIME_API_VERSION))
+    let api_response = client.get(format!("http://{}/{}/runtime/invocation/next", crate::env::env::sandbox_runtime_api(), LAMBDA_RUNTIME_API_VERSION))
         .headers(headers.clone())
         .send()
         .await
         .unwrap();
 
-    
     let status = api_response.status();
     let response_headers = api_response.headers().clone();
+    
     let mut body = api_response.json::<serde_json::Value>().await.unwrap();
+
+    tracing::info!(event_type = "requestEvent", event = ?body, "invoking");
 
     match body.get_mut("name") {
         Some(name) => {
-            *name = serde_json::Value::String("Rustacean".to_string());
+            *name = json!(format!("{} and rustProxy", name.as_str().unwrap()))
         }
         None => {}
     }
+
+    tracing::info!(event_type = "requestEvent", event = ?body, "invoking");
 
     (status, response_headers, Json(body))
 }

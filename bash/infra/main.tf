@@ -12,6 +12,6 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-southeast-2"
-  profile = "CloudboostSandbox"
+  region = var.aws_region
+  profile = var.aws_profile
 }

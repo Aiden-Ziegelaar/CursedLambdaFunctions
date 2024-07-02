@@ -8,20 +8,26 @@ use lambda_extension::*;
 
 pub mod methods;
 pub mod types;
+pub mod actions;
+pub mod env;
 
-pub static PROXY_PORT: u16 = 1337;
+pub const DEFAULT_PROXY_PORT: u16 = 1337;
 
-pub static LAMBDA_RUNTIME_API_PORT: u16 = 9000;
+pub const LAMBDA_RUNTIME_API_PORT: u16 = 9000;
 
 pub static LAMBDA_RUNTIME_API_VERSION: &str = "2018-06-01";
+
+pub const EXTENSION_NAME: &str = "rustProxy";
 
 async fn events_extension(signal: &Arc<Mutex<ShutdownSignalCompleter>>, event: LambdaEvent ) -> Result<(), Error>{
     match event.next {
         NextEvent::Shutdown(e) => {
             tracing::info!(event_type = "shutdown", event = ?e, "shutting down");
             signal.lock().await.complete().await;
-        }
-        _ => {}
+        },
+        NextEvent::Invoke(e) => {
+            tracing::info!(event_type = "invoke", event = ?e, "invoking");
+        },
     }
     Ok(())
 }
@@ -96,30 +102,31 @@ impl Future for ShutdownSignal {
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
 
+    env::env::latch_runtime_env();
+
     let (waiter, completer) = ShutdownSignal::new();
 
-    let server = async {
+    tokio::task::spawn(async {
         let app = Router::new()
-        .route(format!("{}/runtime/init/error", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::init_error::post_init_error))
-        .route(format!("{}/runtime/invocation/next", LAMBDA_RUNTIME_API_VERSION).as_str(), get(methods::invocation_next::get_invocation_next))
-        .route(format!("{}/runtime/invocation/:invocation_id/response", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::invocation_response::post_invocation_response))
-        .route(format!("{}/runtime/invocation/:invocation_id/error", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::invocation_error::post_invocation_error));
+        .route(format!("/{}/runtime/init/error", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::init_error::post_init_error))
+        .route(format!("/{}/runtime/invocation/next", LAMBDA_RUNTIME_API_VERSION).as_str(), get(methods::invocation_next::get_invocation_next))
+        .route(format!("/{}/runtime/invocation/:invocation_id/response", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::invocation_response::post_invocation_response))
+        .route(format!("/{}/runtime/invocation/:invocation_id/error", LAMBDA_RUNTIME_API_VERSION).as_str(), post(methods::invocation_error::post_invocation_error));
         
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", PROXY_PORT)).await.unwrap();
-    
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", DEFAULT_PROXY_PORT)).await.unwrap();
+        
         axum::serve(listener, app)
             .with_graceful_shutdown(waiter).await.unwrap();
-    };
+    });
+
+    //actions::register_extension::register_extension().await;
 
     let completer_mutex = Arc::new(Mutex::new(completer));
 
-    // Run the server with graceful shutdown
-
-    let extension = Extension::new()
+    Extension::new()
+        .with_extension_name(EXTENSION_NAME)
         .with_events_processor(service_fn( |event| events_extension(&completer_mutex, event)))
-        .run();
-
-    let (_,_) = tokio::join!(server, extension);
+        .run().await?;
 
     Ok(())
 }
