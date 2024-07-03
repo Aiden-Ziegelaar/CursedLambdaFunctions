@@ -9,6 +9,7 @@ use lambda_extension::*;
 pub mod methods;
 pub mod types;
 pub mod env;
+pub mod http_client;
 
 pub const DEFAULT_PROXY_PORT: u16 = 1337;
 
@@ -23,10 +24,8 @@ async fn events_extension(signal: &Arc<Mutex<ShutdownSignalCompleter>>, event: L
         NextEvent::Shutdown(e) => {
             tracing::info!(event_type = "shutdown", event = ?e, "shutting down");
             signal.lock().await.complete().await;
-        },
-        NextEvent::Invoke(e) => {
-            tracing::info!(event_type = "invoke", event = ?e, "invoking");
-        },
+        }
+        _ => {}
     }
     Ok(())
 }
@@ -124,6 +123,7 @@ async fn main() -> Result<(), Error> {
 
     Extension::new()
         .with_extension_name(EXTENSION_NAME)
+        .with_events(&["SHUTDOWN"])
         .with_events_processor(service_fn( |event| events_extension(&completer_mutex, event)))
         .run().await?;
 
