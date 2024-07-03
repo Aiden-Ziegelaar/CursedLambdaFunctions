@@ -4,3 +4,4 @@ target
 *.tfvars
 terraform.tfstate
 terraform.tfstate.backup
+*-bak

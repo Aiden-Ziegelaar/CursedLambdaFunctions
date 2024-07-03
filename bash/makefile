@@ -12,9 +12,3 @@ tf-apply: make-executable
 
 tf-destroy:
 	terraform -chdir=./infra destroy --auto-approve
-
-invoke:
-	$(eval TMP := $(shell mktemp))
-	aws lambda invoke --function-name bashHelloWorld --payload '' $(TMP) --cli-binary-format raw-in-base64-out --profile=CloudboostSandbox --region=ap-southeast-2
-	cat $(TMP); echo
-	rm $(TMP)
