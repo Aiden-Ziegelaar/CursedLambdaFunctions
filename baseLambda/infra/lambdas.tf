@@ -14,6 +14,8 @@ data "aws_iam_policy_document" "assume_role" {
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "baseLambdaHelloWorld_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+
+  tags = local.tags 
 }
 
 data "archive_file" "lambda_function_archive" {
@@ -31,4 +33,6 @@ resource "aws_lambda_function" "proxy_lambda" {
   source_code_hash = data.archive_file.lambda_function_archive.output_base64sha256
 
   runtime = "nodejs20.x"
+
+  tags = local.tags
 }

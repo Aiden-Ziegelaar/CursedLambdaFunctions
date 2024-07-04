@@ -14,6 +14,7 @@ data "aws_iam_policy_document" "assume_role" {
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "jsGcHelloWorld_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  tags = local.tags
 }
 
 data "archive_file" "lambda" {
@@ -56,4 +57,6 @@ resource "aws_lambda_function" "js_gc_lambda" {
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/wrapper"
     }
   }
+
+  tags = local.tags
 }

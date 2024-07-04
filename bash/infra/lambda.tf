@@ -14,6 +14,7 @@ data "aws_iam_policy_document" "assume_role" {
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "bashHelloWorld_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  tags = local.tags 
 }
 
 data "archive_file" "lambda" {
@@ -31,4 +32,6 @@ resource "aws_lambda_function" "bash_lambda" {
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
   runtime = "provided.al2023"
+
+  tags = local.tags
 }
