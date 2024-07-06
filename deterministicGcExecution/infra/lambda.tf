@@ -50,6 +50,8 @@ resource "aws_lambda_function" "js_gc_lambda" {
 
   runtime = "nodejs20.x"
 
+  architectures = ["arm64"]
+
   layers = [aws_lambda_layer_version.lambda_layer.arn]
 
   environment {

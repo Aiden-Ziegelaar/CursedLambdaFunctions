@@ -33,5 +33,7 @@ resource "aws_lambda_function" "bash_lambda" {
 
   runtime = "provided.al2023"
 
+  architectures = ["arm64"]
+
   tags = local.tags
 }

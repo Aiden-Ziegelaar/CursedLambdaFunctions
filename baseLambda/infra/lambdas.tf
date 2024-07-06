@@ -34,5 +34,7 @@ resource "aws_lambda_function" "proxy_lambda" {
 
   runtime = "nodejs20.x"
 
+  architectures = ["arm64"]
+
   tags = local.tags
 }
