@@ -47,6 +47,8 @@ resource "aws_lambda_function" "proxy_lambda_js" {
 
   runtime = "nodejs20.x"
 
+  architectures = ["arm64"]
+
   layers = [aws_lambda_layer_version.lambda_layer.arn]
 
   environment {
@@ -67,6 +69,8 @@ resource "aws_lambda_function" "proxy_lambda_py" {
   source_code_hash = data.archive_file.lambda_function_archive_py.output_base64sha256
 
   runtime = "python3.12"
+
+  architectures = ["x86_64"]
 
   layers = [aws_lambda_layer_version.lambda_layer.arn]
 
