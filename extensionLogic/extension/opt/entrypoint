@@ -1,0 +1,15 @@
+#!/bin/sh
+
+args=("$@")
+case $(uname -m) in
+    x86_64)
+        /opt/bootstrap_x86_64 "${args[@]}"
+        ;;
+    aarch64)
+        /opt/bootstrap_aarch64 "${args[@]}"
+        ;;
+    *)
+        echo "Unsupported architecture"
+        exit 1
+        ;;
+esac

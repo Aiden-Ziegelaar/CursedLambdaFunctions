@@ -9,7 +9,7 @@ resource "aws_lambda_layer_version" "lambda_layer" {
     filename   = "lambda_layer_payload.zip"
     layer_name = "rustProxy_layer"
 
-    compatible_runtimes = ["nodejs20.x"]
+    compatible_runtimes = ["nodejs20.x", "python3.12"]
 
     compatible_architectures = ["x86_64", "arm64"]
 
