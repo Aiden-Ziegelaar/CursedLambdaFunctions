@@ -4,7 +4,7 @@ export const handler = async (event) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name: event.name || undefined }),
+      body: JSON.stringify({ name: event.name }),
     })
 
     const response = {
