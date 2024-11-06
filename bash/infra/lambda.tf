@@ -35,5 +35,7 @@ resource "aws_lambda_function" "bash_lambda" {
 
   architectures = ["arm64"]
 
+  layers = [aws_lambda_layer_version.lambda_layer.arn]
+
   tags = local.tags
 }

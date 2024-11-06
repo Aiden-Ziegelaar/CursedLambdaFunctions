@@ -12,3 +12,8 @@ tf-apply: make-executable
 
 tf-destroy:
 	terraform -chdir=./infra destroy --auto-approve
+
+build:
+	mkdir -p layer
+	curl -L -o ./layer/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-arm64
+	chmod +x ./layer/jq

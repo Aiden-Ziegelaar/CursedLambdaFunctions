@@ -1,10 +1,12 @@
 #!/bin/sh
 
 set -euo pipefail
+
 function handler () {
   EVENT_DATA=$1
   echo "$EVENT_DATA" 1>&2;
-  RESPONSE="Hello Bash!"
+  NAME=$(/opt/jq -r .name <<< "$EVENT_DATA")
+  RESPONSE="Hello $NAME!"
   echo $RESPONSE
 }
 
@@ -14,5 +16,6 @@ do
   EVENT_DATA=$(curl -sS -LD "$HEADERS" "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
   REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
   RESPONSE=$($(echo "$_HANDLER" | cut -d. -f2) "$EVENT_DATA")
+  echo $EVENT_DATA
   curl "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"  -d "$RESPONSE"
 done
